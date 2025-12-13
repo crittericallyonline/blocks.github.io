@@ -18,7 +18,7 @@ char *readFile(const char *filePath)
         string[i] = fgetc(f);
     }
     string[size + 1] = '\0';
-    printf("%s\n", string);
+    // printf("%s\n", string);
     
     return string;
 }
@@ -31,7 +31,7 @@ GLuint load_shader(GLuint type, const char *filePath)
     glShaderSource(shader, sizeof(char), (char const * const *)&source, &size);
     glCompileShader(shader);
 
-    free(source);
+    // free(source);
     
     GLint isCompiled = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
@@ -40,6 +40,7 @@ GLuint load_shader(GLuint type, const char *filePath)
         printf("FUCK\n");
     }
     // hey theres no fuck message? what? did my shader compile correctly?
+    // ok now theres fuck messages.
 
     return shader;
 }
@@ -47,13 +48,12 @@ GLuint load_shader(GLuint type, const char *filePath)
 GLuint gen_program(const char *vertPath, const char *fragPath)
 {
     GLuint program = glCreateProgram();
-    glLinkProgram(program);
-    GLuint vertex = load_shader(GL_VERTEX_SHADER, "/shader/vertex.glsl");
-    GLuint fragment = load_shader(GL_FRAGMENT_SHADER, "/shader/fragment.glsl");
+    GLuint vertex = load_shader(GL_VERTEX_SHADER, vertPath);
+    GLuint fragment = load_shader(GL_FRAGMENT_SHADER, fragPath);
     glAttachShader(program, vertex);
     glAttachShader(program, fragment);
-    glCompileShader(vertex);
-    glCompileShader(fragment);
+    glLinkProgram(program);
+    glValidateProgram(program);
     glUseProgram(program);
     return program;
 }

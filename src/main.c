@@ -26,7 +26,7 @@ bool RESIZE_CALLBACK(int eventType, const EmscriptenUiEvent *uiEvent, void *user
 void draw()
 {
     double now = emscripten_performance_now();
-    glClearColor(sin(now / 500.0) / 2 + 0.5f, cos(now / 500.0) / 2 + 0.5f, 0.0f, 1.0f);
+    // glClearColor(sin(now / 500.0) / 2 + 0.5f, cos(now / 500.0) / 2 + 0.5f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glfwPollEvents();
     glFlush();
@@ -61,12 +61,13 @@ int main()
         printf("error setting the webgl context to current\n");
         return -1;
     }
-    global_program = gen_program("/shader/vertex.glsl", "/shader/fragment.glsl");
     
     emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, onMouseMove);
     emscripten_get_element_css_size("#canvas", &width, &height);
     emscripten_set_resize_callback("#canvas", NULL, true, RESIZE_CALLBACK);
 
+    global_program = gen_program("/shader/vertex.vs", "/shader/fragment.fs");
+    
     emscripten_set_main_loop(renderLoop, 0, true);
 
     return 0;
