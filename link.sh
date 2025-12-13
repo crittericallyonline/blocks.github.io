@@ -1,0 +1,1 @@
+emcc ./src/*.c -o ./out/main.js -s MAX_WEBGL_VERSION=2  -s EXPORTED_RUNTIME_METHODS='['HEAPU8', 'HEAPU16', 'HEAPU32', 'HEAPF32']' -s USE_GLFW=3 --preload-file ./res/@/
