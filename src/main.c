@@ -36,7 +36,7 @@ struct Camera {
     float nearPlane, farPlane; // define for later use in rendering
 } Camera;
 
-const double mouse_sens = 1.0f/45.0f;
+const double mouse_sens = 0.001f;
 
 bool onMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData) {
     switch (eventType)
@@ -87,28 +87,27 @@ bool KEYBOARD_CALLBACK(int eventType, const EmscriptenKeyboardEvent *event, void
 
 void draw()
 {
-    static mat4 inverse_matrix;
+    mat4 inverse_matrix;
     double now = emscripten_performance_now() / 1000;
     // glClearColor(sinf(now) / 2.f + 0.5f, 0.0, 0.0f, 1.0f);
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // i think this is all we do here, but before polling we must render stuff
 
-    glm_translate(Camera.transformation, Camera.position);
     
     // Like three.Orientation().order = "YXZ" for proper camera rotation and movement, i think thats correct.
-    glm_rotate_y(Camera.transformation, Camera.rotation[1], inverse_matrix);
-    glm_rotate_x(Camera.transformation, Camera.rotation[0], inverse_matrix);
-    glm_rotate_z(Camera.transformation, Camera.rotation[2], inverse_matrix);
+    // glm_rotate_y(Camera.transformation, Camera.rotation[1], inverse_matrix);
+    // glm_rotate_x(Camera.transformation, Camera.rotation[0], inverse_matrix);
+    // glm_rotate_z(Camera.transformation, Camera.rotation[2], inverse_matrix);
     
-
-    glm_mat4_inv(Camera.transformation, inverse_matrix);
-
-    glUniformMatrix4fv(Program.modelview_matrix, 1, GL_FALSE, inverse_matrix[0]);
-    glUniformMatrix4fv(Program.projection_matrix, 1, GL_FALSE, Camera.projection[0]);
-
     drawModel(triangle);
+
+    glm_mat4_identity(Camera.transformation);
+    glm_translate(Camera.transformation, Camera.position);
+
+
+    glUniformMatrix4fv(Program.modelview_matrix, 1, GL_FALSE, Camera.transformation[0]);
+    glUniformMatrix4fv(Program.projection_matrix, 1, GL_FALSE, Camera.projection[0]);
 
     glfwPollEvents();
     glFlush();
@@ -128,21 +127,22 @@ void renderLoop()
     update();
 }
 
-EMSCRIPTEN_KEEPALIVE
-void set_position(int x, int y, int z)
-{
-    Camera.position[0] = x;
-    Camera.position[1] = y;
-    Camera.position[2] = z;
-}
+// EMSCRIPTEN_KEEPALIVE
+// void set_position(int x, int y, int z)
+// {
+//     Camera.position[0] = x;
+//     Camera.position[1] = y;
+//     Camera.position[2] = z;
+// }
 
 int main()
 {
+    emscripten_get_element_css_size("#canvas", &width, &height);
     Camera.nearPlane = 0.1;
     Camera.farPlane = 1000;
     Camera.fieldOfView = 70;
-    Camera.position[2] = 5; // backwards
-    Camera.playerSpeed = 0.1; //(1/10) units/frame
+    Camera.position[2] = -5; // backwards
+    Camera.playerSpeed = 0.01; //(1/10) units/frame
 
 
     //void glm_perspective(float fovy, float aspect, float nearVal, float farVal, mat4 dest)
@@ -181,10 +181,9 @@ int main()
         return -1;
     }
     glEnable(GL_BLEND);
-    
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, onMouseMove);
-    emscripten_get_element_css_size("#canvas", &width, &height);
     emscripten_set_resize_callback("#canvas", NULL, true, RESIZE_CALLBACK);
     Program.shaderProgram = gen_program("/shader/vertex.vs", "/shader/fragment.fs");
     Program.modelview_matrix = glGetUniformLocation(Program.shaderProgram, "modelview_matrix");
@@ -197,7 +196,6 @@ int main()
 
     triangle = create_triangle();
 
-        
     emscripten_set_main_loop(renderLoop, 0, true);
 
     return 0;
