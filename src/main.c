@@ -36,20 +36,29 @@ struct Camera {
     float nearPlane, farPlane; // define for later use in rendering
 } Camera;
 
-const double mouse_sens = 0.001f;
+const double mouse_sens = 0.02f;
 
-bool onMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData) {
+bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData) {
     switch (eventType)
     {
     case EMSCRIPTEN_EVENT_MOUSEMOVE:
         Camera.rotation[0] += mouse_sens * mouseEvent->movementY;
         Camera.rotation[1] += mouse_sens * mouseEvent->movementX;
+        return true;
+        break;
+
+    case EMSCRIPTEN_EVENT_DBLCLICK:
+        if(emscripten_request_pointerlock("canvas", true))
+        {
+            printf("YIPPEE\n");
+        }
+        return true;
         break;
     
     default:
+        return false;
         break;
     }
-    return true;
 }
 
 bool RESIZE_CALLBACK(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
@@ -87,22 +96,27 @@ bool KEYBOARD_CALLBACK(int eventType, const EmscriptenKeyboardEvent *event, void
 
 void draw()
 {
-    mat4 inverse_matrix;
-    double now = emscripten_performance_now() / 1000;
+    // mat4 inverse_matrix; // removing unused code
+    // double now = emscripten_performance_now() / 1000; // we dont need to have javascript calls
     // glClearColor(sinf(now) / 2.f + 0.5f, 0.0, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // i think this is all we do here, but before polling we must render stuff
 
     
-    // Like three.Orientation().order = "YXZ" for proper camera rotation and movement, i think thats correct.
-    // glm_rotate_y(Camera.transformation, Camera.rotation[1], inverse_matrix);
-    // glm_rotate_x(Camera.transformation, Camera.rotation[0], inverse_matrix);
-    // glm_rotate_z(Camera.transformation, Camera.rotation[2], inverse_matrix);
     
     drawModel(triangle);
+    
 
     glm_mat4_identity(Camera.transformation);
+
+
+    // order of YXZ
+    glm_rotate_x(Camera.transformation, Camera.rotation[0], Camera.transformation);
+    glm_rotate_y(Camera.transformation, Camera.rotation[1], Camera.transformation);
+    glm_rotate_z(Camera.transformation, Camera.rotation[2], Camera.transformation);
+
+
     glm_translate(Camera.transformation, Camera.position);
 
 
@@ -183,7 +197,8 @@ int main()
     glEnable(GL_BLEND);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, onMouseMove);
+    emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, MOUSE_CALLBACK);
+    emscripten_set_dblclick_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, MOUSE_CALLBACK);
     emscripten_set_resize_callback("#canvas", NULL, true, RESIZE_CALLBACK);
     Program.shaderProgram = gen_program("/shader/vertex.vs", "/shader/fragment.fs");
     Program.modelview_matrix = glGetUniformLocation(Program.shaderProgram, "modelview_matrix");
