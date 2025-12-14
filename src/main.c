@@ -17,6 +17,8 @@ double width, height;
 
 Object *triangle;
 
+
+
 struct Camera {
     // transformations
     vec3 position;
@@ -36,14 +38,13 @@ struct Camera {
     float nearPlane, farPlane; // define for later use in rendering
 } Camera;
 
-const double mouse_sens = 0.02f;
 
 bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData) {
     switch (eventType)
     {
     case EMSCRIPTEN_EVENT_MOUSEMOVE:
-        Camera.rotation[0] += mouse_sens * mouseEvent->movementY;
-        Camera.rotation[1] += mouse_sens * mouseEvent->movementX;
+        Camera.rotation[0] += mouseEvent->movementY / 250.0f;
+        Camera.rotation[1] += mouseEvent->movementX / 250.0f;
         return true;
         break;
 
@@ -132,6 +133,7 @@ void update()
     if(pressedKeys['W'])
     {
         Camera.position[2] += cos(Camera.rotation[1]) * Camera.playerSpeed;
+        Camera.position[0] -= sin(Camera.rotation[1]) * Camera.playerSpeed;
     }
 }
 
