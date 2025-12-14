@@ -102,12 +102,13 @@ void draw()
     glm_rotate_x(Camera.transformation, Camera.rotation[0], inverse_matrix);
     glm_rotate_z(Camera.transformation, Camera.rotation[2], inverse_matrix);
     
-    drawModel(triangle);
 
     glm_mat4_inv(Camera.transformation, inverse_matrix);
 
-    glUniformMatrix4fv(Program.projection_matrix, 1, GL_FALSE, Camera.projection[0]);
     glUniformMatrix4fv(Program.modelview_matrix, 1, GL_FALSE, inverse_matrix[0]);
+    glUniformMatrix4fv(Program.projection_matrix, 1, GL_FALSE, Camera.projection[0]);
+
+    drawModel(triangle);
 
     glfwPollEvents();
     glFlush();
@@ -179,8 +180,8 @@ int main()
         printf("error setting the webgl context to current\n");
         return -1;
     }
+    glEnable(GL_BLEND);
     
-    triangle = create_triangle();
 
     emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, onMouseMove);
     emscripten_get_element_css_size("#canvas", &width, &height);
@@ -192,6 +193,9 @@ int main()
 
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
+
+
+    triangle = create_triangle();
 
         
     emscripten_set_main_loop(renderLoop, 0, true);

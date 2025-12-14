@@ -8,45 +8,53 @@
 
 typedef struct Object
 {
-    GLuint VAO, VAB, EAB;
+    GLuint VAO;
     uint32_t vert_count;
-    float *vertices;
-    uint32_t *indicies;
 } Object;
 
 Object *create_triangle()
 {
 
     float vertices[] = {
-        0, 0.500, 0,
-        0.500, -0.500, 0,
-        -0.500, -0.500, 0
+        0, 0.5, 0,
+        0.5, -0.5, 0,
+        -0.5, -0.5, 0
     };
 
     unsigned int indices[] = {
         0, 1, 2
     };
 
-    GLuint buffer1;
-    glGenVertexArrays(1, &buffer1);
-    glBindVertexArray(buffer1);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), vertices, GL_STATIC_DRAW);
+    GLuint array, verticiesBuffer,indicesBuffer;
+    glGenVertexArrays(1, &array);
+    glBindVertexArray(array);
+
+    glGenBuffers(1, &verticiesBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, verticiesBuffer);
+    glBufferData(GL_ARRAY_BUFFER, 3, vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &indicesBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3, vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(Program.vertex_position, 3, GL_FLOAT, false, 0, NULL);
+    glEnableVertexAttribArray(Program.vertex_position);
 
     Object *model = (Object *) malloc(sizeof(Object));
 
-    model->VAB = buffer1;
+
+    model->VAO = array;
     model->vert_count = 3;
-    model->vertices = vertices;
-    model->indicies = indices;
+    glBindVertexArray(0);
+    glDisableVertexAttribArray(Program.vertex_position);
 
     return model;
 }
 
 void drawModel(Object *model)
 {
-    glEnableVertexAttribArray(Program.vertex_position);
-    glVertexAttribPointer(Program.vertex_position, 3, GL_FLOAT, false, 0, model->vertices);
-    glBindBuffer(GL_ARRAY_BUFFER, model->VAB);
-    glDrawArrays(GL_TRIANGLES, 0, 3 * sizeof(float));
-    glDisableVertexAttribArray(Program.vertex_position);
+    glBindVertexArray(model->VAO);
+    glDrawArrays(GL_LINES, 0, model->vert_count);
+    glBindVertexArray(0);
 }
