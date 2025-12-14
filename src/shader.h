@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 char *readFile(const char *filePath)
 {
     FILE *f = fopen(filePath, "rb");
@@ -17,8 +19,10 @@ char *readFile(const char *filePath)
         string[i] = fgetc(f);
     }
     string[size + 1] = '\0';
-    // printf("%s\n", string);
-    
+    // if(fclose(f))
+    // {
+    //     return NULL;
+    // }
     return string;
 }
 
@@ -30,7 +34,7 @@ GLuint load_shader(GLuint type, const char *filePath)
     glShaderSource(shader, sizeof(char), (char const * const *)&source, &size);
     glCompileShader(shader);
 
-    // free(source);
+    free(source);
     
     GLint isCompiled = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
@@ -38,8 +42,6 @@ GLuint load_shader(GLuint type, const char *filePath)
     {
         printf("FUCK\n");
     }
-    // hey theres no fuck message? what? did my shader compile correctly?
-    // ok now theres fuck messages.
 
     return shader;
 }

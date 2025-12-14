@@ -2,57 +2,88 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5_webgl.h>
 #include <GL/gl.h>
-#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <math.h>
 
 // :3 - Willow
 
-#include "shader.h"
 #include "cglm/cglm.h"
+#include "program.h"
+#include "shader.h"
+#include "objects.h"
 
 double width, height;
 
-struct World {
-} World;
 
-struct Program {
-    GLuint shaderProgram;
-    
-    // uniforms
-    GLuint projection_matrix;
-    GLuint modelview_matrix;
-} Program;
+Object *triangle;
 
 struct Camera {
+    // transformations
     vec3 position;
+    vec3 velocity;
+    vec3 acceleration;
+
     vec3 rotation;
     vec3 scale;
 
+    // mat4
     mat4 transformation;
     mat4 projection;
-    
+
+    float playerSpeed;
 
     float fieldOfView;
     float nearPlane, farPlane; // define for later use in rendering
 } Camera;
 
+const double mouse_sens = 1.0f/45.0f;
 
 bool onMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData) {
     // printf("(%d, %d)\n", mouseEvent->clientX, mouseEvent->clientY);
+    switch (eventType)
+    {
+    case EMSCRIPTEN_EVENT_MOUSEMOVE:
+        Camera.rotation[0] += mouse_sens * mouseEvent->movementY;
+        Camera.rotation[1] += mouse_sens * mouseEvent->movementX;
+        // printf("%f, %f\n", Camera.rotation[0], Camera.rotation[1]);
+        break;
+    
+    default:
+        break;
+    }
     return true;
 }
 
 bool RESIZE_CALLBACK(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
 {
     emscripten_get_element_css_size("#canvas", &width, &height);
-    glViewport(0, 0, width, height);
     return true;
 }
 
+bool pressedKeys[256] = {0};
+
 bool KEYBOARD_CALLBACK(int eventType, const EmscriptenKeyboardEvent *event, void *userData)
 {
-    printf("%s\n", event->charValue);
+
+    if(event->keyCode > 256)
+    {
+        return false;
+    }
+
+    switch (eventType)
+    {
+
+    case EMSCRIPTEN_EVENT_KEYDOWN:
+        pressedKeys[event->keyCode] = true;
+        break;
+    
+    case EMSCRIPTEN_EVENT_KEYUP:
+        pressedKeys[event->keyCode] = false;
+        break;
+    
+    default:
+        break;
+    }
     return true;
 }
 
@@ -61,23 +92,51 @@ void draw()
     static mat4 inverse_matrix;
     double now = emscripten_performance_now() / 1000;
     // glClearColor(sinf(now) / 2.f + 0.5f, 0.0, 0.0f, 1.0f);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // i think this is all we do here, but before polling we must render stuff
 
+    
+    // Like three.Orientation().order = "YXZ" for proper camera rotation and movement, i think thats correct.
+    // glm_rotate_y(Camera.transformation, Camera.rotation[1], inverse_matrix);
+    // glm_rotate_x(Camera.transformation, Camera.rotation[0], inverse_matrix);
+    // glm_rotate_z(Camera.transformation, Camera.rotation[2], inverse_matrix);
+    
     glm_translate(Camera.transformation, Camera.position);
-    glm_mat4_inv(Camera.transformation, inverse_matrix);
+    // glm_mat4_inv(Camera.transformation, inverse_matrix);
+
+
+    glUniformMatrix4fv(Program.projection_matrix, 1, GL_FALSE, Camera.projection[0]);
     glUniformMatrix4fv(Program.modelview_matrix, 1, GL_FALSE, inverse_matrix[0]);
 
-    // polling and flushing, why is flush here again? i dont remember
+
+    drawModel(triangle);
+
     glfwPollEvents();
     glFlush();
+}
+
+void update()
+{
+    if(pressedKeys['W'])
+    {
+        Camera.position[2] += cos(Camera.rotation[1]) * Camera.playerSpeed;
+    }
 }
 
 void renderLoop()
 {
     draw();
+    update();
+}
+
+EMSCRIPTEN_KEEPALIVE
+void set_position(int x, int y, int z)
+{
+    Camera.position[0] = x;
+    Camera.position[1] = y;
+    Camera.position[2] = z;
 }
 
 int main()
@@ -86,6 +145,8 @@ int main()
     Camera.farPlane = 1000;
     Camera.fieldOfView = 70;
     Camera.position[2] = 5; // backwards
+    Camera.playerSpeed = 0.1; //(1/10) units/frame
+
 
     //void glm_perspective(float fovy, float aspect, float nearVal, float farVal, mat4 dest)
 
@@ -123,16 +184,21 @@ int main()
         return -1;
     }
     
+    triangle = create_triangle();
+
     emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, onMouseMove);
     emscripten_get_element_css_size("#canvas", &width, &height);
     emscripten_set_resize_callback("#canvas", NULL, true, RESIZE_CALLBACK);
     Program.shaderProgram = gen_program("/shader/vertex.vs", "/shader/fragment.fs");
     Program.modelview_matrix = glGetUniformLocation(Program.shaderProgram, "modelview_matrix");
     Program.projection_matrix = glGetUniformLocation(Program.shaderProgram, "projection_matrix");
-    
+    Program.vertex_position = glGetAttribLocation(Program.shaderProgram, "vertex_position");
+    glEnableVertexAttribArray(Program.vertex_position);
+
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
 
+        
     emscripten_set_main_loop(renderLoop, 0, true);
 
     return 0;
