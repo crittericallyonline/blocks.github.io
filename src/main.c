@@ -22,11 +22,14 @@ Object *triangle;
 struct Camera {
     // transformations
     vec3 position;
+    //
     vec3 velocity;
-    vec3 acceleration;
+    vec3 friction;
+    // vec3 acceleration;
 
     vec3 rotation;
     vec3 scale;
+    
 
     // mat4
     mat4 transformation;
@@ -128,13 +131,42 @@ void draw()
     glFlush();
 }
 
+
 void update()
 {
+
+
     if(pressedKeys['W'])
     {
-        Camera.position[2] += cos(Camera.rotation[1]) * Camera.playerSpeed;
-        Camera.position[0] -= sin(Camera.rotation[1]) * Camera.playerSpeed;
+        Camera.velocity[2] += cos(Camera.rotation[1]) * Camera.playerSpeed;
+        Camera.velocity[0] -= sin(Camera.rotation[1]) * Camera.playerSpeed;
     }
+    if(pressedKeys['S'])
+    {
+        Camera.velocity[2] -= cos(Camera.rotation[1]) * Camera.playerSpeed;
+        Camera.velocity[0] += sin(Camera.rotation[1]) * Camera.playerSpeed;
+    }
+    if(pressedKeys['A'])
+    {
+        Camera.velocity[2] += sin(Camera.rotation[1]) * Camera.playerSpeed;
+        Camera.velocity[0] += cos(Camera.rotation[1]) * Camera.playerSpeed;
+    }
+    if(pressedKeys['D'])
+    {
+        Camera.velocity[2] -= sin(Camera.rotation[1]) * Camera.playerSpeed;
+        Camera.velocity[0] -= cos(Camera.rotation[1]) * Camera.playerSpeed;
+    }
+    if(pressedKeys[' '])
+    {
+        Camera.velocity[1] -= Camera.playerSpeed;
+    }
+    if(pressedKeys[16])
+    {
+        Camera.velocity[1] += Camera.playerSpeed;
+    }
+
+    glm_vec3_mul(Camera.velocity, Camera.friction, Camera.velocity);
+    glm_vec3_add(Camera.position, Camera.velocity, Camera.position);
 }
 
 void renderLoop()
@@ -156,9 +188,13 @@ int main()
     emscripten_get_element_css_size("#canvas", &width, &height);
     Camera.nearPlane = 0.1;
     Camera.farPlane = 1000;
-    Camera.fieldOfView = 70;
+    Camera.fieldOfView = 120;
     Camera.position[2] = -5; // backwards
-    Camera.playerSpeed = 0.01; //(1/10) units/frame
+    Camera.playerSpeed = 0.0025;
+
+    Camera.friction[0] = 0.89f;
+    Camera.friction[1] = 0.89f;
+    Camera.friction[2] = 0.89f;
 
 
     //void glm_perspective(float fovy, float aspect, float nearVal, float farVal, mat4 dest)
