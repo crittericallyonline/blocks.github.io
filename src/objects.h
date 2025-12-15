@@ -12,17 +12,57 @@ typedef struct Object
     uint32_t vert_count;
 } Object;
 
-Object *create_triangle()
+Object *create_cube()
 {
 
-    float vertices[] = {
-        0, 0.5, 1,
-        0.5, -0.5, 1,
-        -0.5, -0.5, 1
-    };
+    GLubyte vertices[] = {
+        // front
+        0, 0, 1,
+        1, 0, 1,
+        0, 1, 1,
+        1, 0, 1,
+        1, 1, 1,
+        0, 1, 1,
 
-    unsigned int indices[] = {
-        0, 1, 2
+        // back
+        1, 0, 0,
+        0, 0, 0,
+        0, 1, 0,
+        1, 1, 0,
+        1, 0, 0,
+        0, 1, 0,
+
+        // top
+        1, 1, 1,
+        1, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 1,
+        1, 1, 1,
+
+        // bottom
+        0, 0, 0,
+        1, 0, 0,
+        1, 0, 1,
+        1, 0, 1,
+        0, 0, 1,
+        0, 0, 0,
+
+        // left
+        0, 1, 1,
+        0, 1, 0,
+        0, 0, 0,
+        0, 1, 1,
+        0, 0, 0,
+        0, 0, 1,
+
+        // right
+        1, 0, 1,
+        1, 0, 0,
+        1, 1, 0,
+        1, 0, 1,
+        1, 1, 0,
+        1, 1, 1,
     };
 
     GLuint array, verticiesBuffer,indicesBuffer;
@@ -34,19 +74,13 @@ Object *create_triangle()
     glBindBuffer(GL_ARRAY_BUFFER, verticiesBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // indicies
-    glGenBuffers(1, &indicesBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices) , indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(Program.vertex_position, 3, GL_FLOAT, false, 0, NULL);
+    glVertexAttribPointer(Program.vertex_position, 3, GL_UNSIGNED_BYTE, false, 0, NULL);
     glEnableVertexAttribArray(Program.vertex_position);
 
     Object *model = (Object *) malloc(sizeof(Object));
 
-
     model->VAO = array;
-    model->vert_count = 3;
+    model->vert_count = sizeof(vertices) / 3;
     glBindVertexArray(0);
     glDisableVertexAttribArray(Program.vertex_position);
 
@@ -55,9 +89,7 @@ Object *create_triangle()
 
 void drawModel(Object *model)
 {
-    glEnableVertexAttribArray(Program.vertex_position);
     glBindVertexArray(model->VAO);
     glDrawArrays(GL_TRIANGLES, 0, model->vert_count);
     glBindVertexArray(0);
-    glDisableVertexAttribArray(Program.vertex_position);
 }

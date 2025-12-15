@@ -12,12 +12,12 @@
 #include "shader.h"
 #include "objects.h"
 
+#define PI 3.141592653589
+
 double width, height;
 
 
-Object *triangle;
-
-
+Object *cube;
 
 struct Camera {
     // transformations
@@ -29,7 +29,6 @@ struct Camera {
 
     vec3 rotation;
     vec3 scale;
-    
 
     // mat4
     mat4 transformation;
@@ -52,10 +51,7 @@ bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void 
         break;
 
     case EMSCRIPTEN_EVENT_DBLCLICK:
-        if(emscripten_request_pointerlock("canvas", true))
-        {
-            printf("YIPPEE\n");
-        }
+        emscripten_request_pointerlock("canvas", false);
         return true;
         break;
     
@@ -67,11 +63,13 @@ bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void 
 
 bool RESIZE_CALLBACK(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
 {
-    emscripten_get_element_css_size("#canvas", &width, &height);
+    glm_perspective((Camera.fieldOfView / 180.0f) * PI, (float) uiEvent->windowInnerWidth / (float) uiEvent->windowInnerHeight, 0.1f, 1000.0f, Camera.projection);
     return true;
 }
 
 bool pressedKeys[256] = {0};
+
+EmscriptenFullscreenStrategy fullscreen;
 
 bool KEYBOARD_CALLBACK(int eventType, const EmscriptenKeyboardEvent *event, void *userData)
 {
@@ -85,6 +83,12 @@ bool KEYBOARD_CALLBACK(int eventType, const EmscriptenKeyboardEvent *event, void
     {
 
     case EMSCRIPTEN_EVENT_KEYDOWN:
+        if(event->keyCode == 122){
+            emscripten_request_fullscreen_strategy("#canvas", true, &fullscreen);
+
+            fullscreen.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_CENTER;
+            
+        }
         pressedKeys[event->keyCode] = true;
         break;
     
@@ -107,13 +111,11 @@ void draw()
 
     // i think this is all we do here, but before polling we must render stuff
 
-    
-    
-    drawModel(triangle);
+    drawModel(cube);
     
 
     glm_mat4_identity(Camera.transformation);
-
+    
 
     // order of YXZ
     glm_rotate_x(Camera.transformation, Camera.rotation[0], Camera.transformation);
@@ -122,6 +124,9 @@ void draw()
 
 
     glm_translate(Camera.transformation, Camera.position);
+
+
+    glm_scale(Camera.transformation, Camera.scale);
 
 
     glUniformMatrix4fv(Program.modelview_matrix, 1, GL_FALSE, Camera.transformation[0]);
@@ -175,26 +180,27 @@ void renderLoop()
     update();
 }
 
-// EMSCRIPTEN_KEEPALIVE
-// void set_position(int x, int y, int z)
-// {
-//     Camera.position[0] = x;
-//     Camera.position[1] = y;
-//     Camera.position[2] = z;
-// }
+EMSCRIPTEN_KEEPALIVE
+void set_position(int x, int y, int z)
+{
+    Camera.position[0] = x;
+    Camera.position[1] = y;
+    Camera.position[2] = z;
+}
 
 int main()
 {
+
     emscripten_get_element_css_size("#canvas", &width, &height);
     Camera.nearPlane = 0.1;
     Camera.farPlane = 1000;
-    Camera.fieldOfView = 120;
+    Camera.fieldOfView = 70;
     Camera.position[2] = -5; // backwards
     Camera.playerSpeed = 0.0025;
 
-    Camera.friction[0] = 0.89f;
-    Camera.friction[1] = 0.89f;
-    Camera.friction[2] = 0.89f;
+
+    glm_vec3_fill(Camera.friction, 0.89f);
+    glm_vec3_fill(Camera.scale, 1);
 
 
     //void glm_perspective(float fovy, float aspect, float nearVal, float farVal, mat4 dest)
@@ -205,8 +211,8 @@ int main()
     // fovy is in RADIANS
     // aspect = width / height
     // for near and far good values are 0.1 and 1000 respectively
-    glm_perspective(1.22173048f, width / height, Camera.nearPlane, Camera.farPlane, Camera.projection);
-
+    glm_perspective((Camera.fieldOfView / 180.0f) * PI, width / height, Camera.nearPlane, Camera.farPlane, Camera.projection);
+    
     glm_mat4_identity(Camera.transformation);
 
 
@@ -218,8 +224,10 @@ int main()
 
     EmscriptenWebGLContextAttributes attrs;
     
-    attrs.majorVersion = 2;
-    attrs.minorVersion = 3;
+    attrs.majorVersion = 3;
+    attrs.minorVersion = 2;
+    attrs.preserveDrawingBuffer = true;
+    attrs.antialias = false;
 
     emscripten_webgl_init_context_attributes(&attrs);
     
@@ -232,12 +240,16 @@ int main()
         printf("error setting the webgl context to current\n");
         return -1;
     }
+    glCullFace(GL_BACK);
+
     glEnable(GL_BLEND);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnable(GL_CULL_FACE);
+    
+    glClearColor(135.0f / 255.0f, 206.0f / 255.0f, 235.0f / 255.0f, 1.0f);
 
     emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, MOUSE_CALLBACK);
     emscripten_set_dblclick_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, MOUSE_CALLBACK);
-    emscripten_set_resize_callback("#canvas", NULL, true, RESIZE_CALLBACK);
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, RESIZE_CALLBACK);
     Program.shaderProgram = gen_program("/shader/vertex.vs", "/shader/fragment.fs");
     Program.modelview_matrix = glGetUniformLocation(Program.shaderProgram, "modelview_matrix");
     Program.projection_matrix = glGetUniformLocation(Program.shaderProgram, "projection_matrix");
@@ -246,8 +258,9 @@ int main()
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
 
+    
 
-    triangle = create_triangle();
+    cube = create_cube();
 
     emscripten_set_main_loop(renderLoop, 0, true);
 
