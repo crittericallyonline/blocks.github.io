@@ -1,3 +1,5 @@
+// this is not an A.I Generated game :3
+
 #include <stdio.h>
 #include <emscripten/emscripten.h>
 #include <emscripten/html5_webgl.h>
@@ -14,13 +16,13 @@
 
 #define PI 3.141592653589
 
-double width, height;
-
+// special thanks to -> Malicious chromosoze
 
 Object *cube;
 
 struct Camera {
     // transformations
+    vec3 last_position;
     vec3 position;
     //
     vec3 velocity;
@@ -40,6 +42,7 @@ struct Camera {
     float nearPlane, farPlane; // define for later use in rendering
 } Camera;
 
+#define clamp(v, min, max) ((v) > (max) ? (max) : ((v) < (min) ? (min) : (v)))
 
 bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData) {
     switch (eventType)
@@ -47,6 +50,9 @@ bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void 
     case EMSCRIPTEN_EVENT_MOUSEMOVE:
         Camera.rotation[0] += mouseEvent->movementY / 250.0f;
         Camera.rotation[1] += mouseEvent->movementX / 250.0f;
+
+        Camera.rotation[0] = clamp(Camera.rotation[0], -PI/2.f, PI/2.f);
+        
         return true;
         break;
 
@@ -193,7 +199,9 @@ void set_position(int x, int y, int z)
 int main()
 {
 
+    double width, height;
     emscripten_get_element_css_size("#canvas", &width, &height);
+    
     Camera.nearPlane = 0.1;
     Camera.farPlane = 1000;
     Camera.fieldOfView = 70;
@@ -207,12 +215,6 @@ int main()
 
     //void glm_perspective(float fovy, float aspect, float nearVal, float farVal, mat4 dest)
 
-    // thanks to
-    //Malicious chromosoze
-    //  — 4:41 PM
-    // fovy is in RADIANS
-    // aspect = width / height
-    // for near and far good values are 0.1 and 1000 respectively
     glm_perspective((Camera.fieldOfView / 180.0f) * PI, width / height, Camera.nearPlane, Camera.farPlane, Camera.projection);
     
     glm_mat4_identity(Camera.transformation);
