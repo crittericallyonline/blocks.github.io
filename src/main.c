@@ -56,7 +56,7 @@ bool MOUSE_CALLBACK(int eventType, const EmscriptenMouseEvent *mouseEvent, void 
         Camera.rotation[1] += mouseEvent->movementX / 250.0f;
 
         Camera.rotation[0] = clamp(Camera.rotation[0], -PI/2.f, PI/2.f);
-        Camera.rotation[0] = loop(Camera.rotation[0], -PI/2.f, PI/2.f);
+        Camera.rotation[1] = loop(Camera.rotation[1], -PI, PI);
         
         return true;
         break;
@@ -271,7 +271,7 @@ int main()
 
     init_textures();
 
-    cube = create_cube(0);
+    cube = create_cube(1);
 
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);

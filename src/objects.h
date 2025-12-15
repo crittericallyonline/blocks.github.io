@@ -11,6 +11,7 @@ typedef struct Object
     uint32_t index_count;
     GLuint VAO;
     GLuint buffers[3]; // vert, 
+    GLuint transform;
 } Object;
 
 Object *create_cube(GLuint id)
@@ -18,21 +19,15 @@ Object *create_cube(GLuint id)
 
     GLfloat vertices[] = {
       //X  Y  Z  U  V
-        0.0, 0.0, 0.5, 0.0, 0.0,
-        1.0, 0.0, 0.5, 1.0, 0.0,
-        0.0, 1.0, 0.5, 0.0, 1.0,
-        1.0, 1.0, 0.5, 1.0, 1.0,
-        0.0, 0.0, -.5, 0.0, 0.0,
-        0.0, 1.0, -.5, 1.0, 0.0,
-        1.0, 0.0, -.5, 0.0, 1.0,
-        1.0, 1.0, -.5, 1.0, 1.0,
+        -.5, -.5, 0.5, 0.0, 0.0,
+        0.5, -.5, 0.5, 1.0, 0.0,
+        -.5, 0.5, 0.5, 0.0, 1.0,
+        0.5, 0.5, 0.5, 1.0, 1.0,
     };
 
     GLuint indices[] = {
         0, 1, 2,
         2, 1, 3,
-        4, 5, 6,
-        6, 5, 7
     };
 
     GLuint array, vertBuffer, indexBuffer, uvBuffer;
@@ -52,14 +47,13 @@ Object *create_cube(GLuint id)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), 0, GL_STATIC_DRAW);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(indices), indices);
 
-
     // verts
     glEnableVertexAttribArray(Program.vertex_position);
     glVertexAttribPointer(Program.vertex_position, 3, GL_FLOAT, false, 5 * sizeof(float), NULL);
 
     // uvs
     glEnableVertexAttribArray(Program.texcoord);
-    glVertexAttribPointer(Program.texcoord, 2, GL_FLOAT, false,5 * sizeof(float), NULL);
+    glVertexAttribPointer(Program.texcoord, 2, GL_FLOAT, false, 5 * sizeof(float), NULL);
     
     glBindVertexArray(0);
     

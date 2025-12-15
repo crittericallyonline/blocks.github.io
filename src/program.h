@@ -16,6 +16,7 @@ struct Program {
         //FRAGMENT STUFF
     // uniforms
     GLuint sampler0;
+    GLuint color;
 } Program;
 
 #endif//PROGRAM_H
