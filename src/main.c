@@ -262,7 +262,9 @@ int main()
     Program.vertex_position = glGetAttribLocation(Program.shaderProgram, "vertex_position");
     Program.texcoord = glGetAttribLocation(Program.shaderProgram, "texcoord");
 
-    cube = create_cube();
+    init_textures();
+
+    cube = create_cube(0);
 
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, true, KEYBOARD_CALLBACK);

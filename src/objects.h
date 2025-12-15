@@ -2,9 +2,8 @@
 #include <GLES3/gl3.h>
 #include <stdlib.h>
 #include "program.h"
+#include "textures.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 typedef struct Object
 {
@@ -14,65 +13,7 @@ typedef struct Object
     GLuint buffers[3]; // vert, 
 } Object;
 
-// some of it is from: https://open.gl/textures
-GLuint generate_checker()
-{
-    GLuint image;
-    // glActiveTexture(GL_TEXTURE0); // idk what this does so lets disable it and see what happens
-
-    glGenTextures(1, &image);
-    glBindTexture(GL_TEXTURE_2D, image);
-    // Black/white checkerboard
-    float pixels[] = {
-        0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f,   0.0f, 0.0f, 0.0f
-    };
-
-    // now for binding data to the buffer
-    // I HATE SAMPLING, pixel art ftw
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, pixels);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    return image;
-}
-
-GLuint load_image(const char *imagePath)
-{
-    GLuint image;
-    glGenTextures(1, &image);
-    glBindTexture(GL_TEXTURE_2D, image);
-    int w, h, c;
-
-    unsigned char *imageData = stbi_load(imagePath, &w, &h, &c, STBI_rgb_alpha);
-    if(!imageData)
-    {
-        glDeleteTextures(1, &image);
-        return 0;
-    }
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    if(c == 3)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, imageData);
-    else if(c == 4)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-    
-    free(imageData);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    
-    return image;
-}
-
-Object *create_cube()
+Object *create_cube(GLuint id)
 {
 
     GLfloat vertices[] = {
@@ -131,7 +72,7 @@ Object *create_cube()
     model->buffers[1] = indexBuffer;
     model->buffers[2] = uvBuffer;
     model->index_count = sizeof(indices) / 4;
-    model->textureID = load_image("/tex/blocks.png");
+    model->textureID = Textures.index[id];
 
     return model;
 }
