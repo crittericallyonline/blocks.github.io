@@ -228,13 +228,14 @@ int main()
 
     EmscriptenWebGLContextAttributes attrs;
     
-    attrs.majorVersion = 3;
-    attrs.minorVersion = 2;
-    attrs.preserveDrawingBuffer = true;
-    attrs.antialias = false;
 
     emscripten_webgl_init_context_attributes(&attrs);
     
+    attrs.majorVersion = 2;
+    attrs.minorVersion = 2;
+    attrs.preserveDrawingBuffer = false;
+    attrs.antialias = true;
+
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context("#canvas", &attrs);
 
     int success = emscripten_webgl_make_context_current(context);

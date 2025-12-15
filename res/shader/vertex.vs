@@ -1,16 +1,16 @@
-#version 100
-
-// id,k
-attribute vec3 vertex_position; 
-attribute vec2 texcoord;
+#version 300 es
 
 // in
+in vec3 vertex_position; 
+in vec2 texcoord;
+
+// globals
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 uniform float time;
 
 // out
-varying vec2 TexCoord;
+out vec2 TexCoord;
 
 void main()
 {

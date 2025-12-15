@@ -1,12 +1,14 @@
-#version 100
+#version 300 es
 
 precision mediump float;
 
 uniform sampler2D imageTex;
-varying vec2 TexCoord;
-varying float time;
+in vec2 TexCoord;
+in float time;
+
+out vec4 diffuseColor;
 
 void main()
 {
-    gl_FragColor = texture2D(imageTex, TexCoord);
+    diffuseColor = texture(imageTex, TexCoord);
 }
