@@ -119,6 +119,8 @@ void draw()
 
     // i think this is all we do here, but before polling we must render stuff
 
+    glUniform1i(Program.time, (int) emscripten_performance_now());
+
     drawModel(cube);
     
 
@@ -186,6 +188,7 @@ void renderLoop()
 {
     draw();
     update();
+
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -227,14 +230,11 @@ int main()
     }
 
     EmscriptenWebGLContextAttributes attrs;
-    
 
     emscripten_webgl_init_context_attributes(&attrs);
     
     attrs.majorVersion = 2;
     attrs.minorVersion = 2;
-    attrs.preserveDrawingBuffer = false;
-    attrs.antialias = true;
 
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context("#canvas", &attrs);
 
@@ -262,6 +262,7 @@ int main()
     Program.projection_matrix = glGetUniformLocation(Program.shaderProgram, "projection_matrix");
     Program.vertex_position = glGetAttribLocation(Program.shaderProgram, "vertex_position");
     Program.texcoord = glGetAttribLocation(Program.shaderProgram, "texcoord");
+    Program.time = glGetUniformLocation(Program.shaderProgram, "iTime");
 
     init_textures();
 

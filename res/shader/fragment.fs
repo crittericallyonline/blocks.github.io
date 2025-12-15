@@ -1,14 +1,16 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
+
+in vec2 TexCoord;
 
 uniform sampler2D imageTex;
-in vec2 TexCoord;
-in float time;
+uniform int iTime;
 
 out vec4 diffuseColor;
 
 void main()
 {
-    diffuseColor = texture(imageTex, TexCoord);
+    vec2 uv = TexCoord;
+    diffuseColor = texture(imageTex, uv);
 }
